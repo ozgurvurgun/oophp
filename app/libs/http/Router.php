@@ -22,7 +22,7 @@ class Router
         return $this->location;
     }
 
-    protected function run(string $path, callable $func): void
+    public function run(string $path, callable $func): void
     {
         if ($this->location === $path) {
             $this->hasRoute = true;
@@ -30,8 +30,23 @@ class Router
         }
     }
 
+
+    public function runWithParams(string $path, callable $func): void
+    {
+        $pattern = preg_replace('/\{url\}/', '([a-zA-Z0-9_]+)', $path);
+        $pattern = preg_replace('/\{id\}/', '([0-9]+)', $pattern);
+        $pattern = str_replace('/', '\/', $pattern);
+        $pattern = '/^' . $pattern . '$/';
+
+        if (preg_match($pattern, $this->location, $matches)) {
+            array_shift($matches); // Remove the full match
+            $this->hasRoute = true;
+            call_user_func_array($func, $matches);
+        }
+    }
+
     public function getHasRoute(): bool
-    {   
+    {   //To prevent redirection when POST request arrives
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             return true;
         } else {
